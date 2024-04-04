@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-char **separarComandos(char *linea)
+char **separarComandos(char *linea)//Recibe una cadena y devuelve un arreglo de cadenas con los comandos separados 
 {
     char delimitadores[] = "|><";
     char *token;
@@ -17,8 +17,9 @@ char **separarComandos(char *linea)
     }
     return comandos;
 }
-char **separarArgumentos(char *comando)
+char **separarArgumentos(char *comando)//Recibe una cadena y devuelve un arreglo de cadenas con los argumentos separados(incluyendo el nombre del comando en la primera posicion)
 {
+
     char delimitadores[] = " ";
     char *token;
     char **argumentos = (char **)malloc(255 * sizeof(char *));
@@ -26,13 +27,17 @@ char **separarArgumentos(char *comando)
     token = strtok(comando, delimitadores);
     while (token != NULL)
     {
+
         argumentos[i] = token;
-        i++;
+        i++; 
         token = strtok(NULL, delimitadores);
     }
+    argumentos[i] = NULL;
+
     return argumentos;
 }
-int contarElementos(char **argumentos)
+
+int contarElementos(char **argumentos)//Devuelve el numero de elementos de un arreglo de strings
 {
     int i = 0;
     while (argumentos[i] != NULL)
@@ -42,23 +47,24 @@ int contarElementos(char **argumentos)
     return i;
 }
 
-
-
-char *quitarSalto(char *linea)
+char *quitarSalto(char *linea)//Quita el salto de linea cuando lees el comando
 {
     linea[strcspn(linea, "\n")] = '\0';
     return linea;
 }
+
+
+
 int main()
 {
 
-    int numComandos;
-    char linea[255];
-    char **comandos;
-    char **argumentos;
+    int numComandos;//Numero de comandos que se ingresaron
+    char linea[255];//Bufer de entrada
+    char **comandos;//Arreglo de comandos
+    char **argumentos;//Arreglo de argumentos
     while (1)
     {
-        printf("$>");
+        printf("\n$>");
         fflush(stdin);
         fgets(linea, 255, stdin);
         quitarSalto(linea);
@@ -66,23 +72,37 @@ int main()
         numComandos=contarElementos(comandos);//Contamos cuantos comandos hay
         for(int i=0;i<numComandos ;i++)
         {
-            printf("Comando %d: %s\n", i+1, comandos[i]);
-            //Tal vez ya no sea necesario separar los argumentos de cada comando
-            argumentos=separarArgumentos(comandos[i]);//Obtenemos los argumentos de cada comando
-            int numArgumentos=contarElementos(argumentos);//Contamos cuantos argumentos hay
-            printf("Numero de argumentos: %d\n", numArgumentos);
-            for(int j=1;j<numArgumentos;j++)
-            {
-                printf("Argumento %d: %s\n", j+1, argumentos[j]);
-            }
+            //tuberia[0] es de lectura
+            //tuberia[1] es de escritura
 
-            if (strcmp(comandos[i], "exit") == 0){
+                int tuberia[2];                 
+                pipe(tuberia);
+                int hijo=fork();
+
+                 if(hijo==0)
+                 {
+                    //close(tuberia[0]);
+                    //dup2(tuberia[1],1);
+                    //close(tuberia[1]);
+                    char **argumentos=separarArgumentos(comandos[i]);//Obtenemos los argumentos separados por espacio
+                    execvp(argumentos[0],argumentos);
+                    printf("Error al ejecutar el comando\n");
+                    
+               }
+               else{
+                    wait(NULL);//Esperamos a que el hijo termine para que imprima el prompt
+                }
+
+            if (strcmp(comandos[i], "exit") == 0)
+            {
                 printf("Saliendo del programa\n");
                 exit(0);
             }  
+
         }
+        
 
     }
 
-    return 0;
+
 }
