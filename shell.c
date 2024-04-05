@@ -5,72 +5,6 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 
-char **separarComandos(char *linea)
-{
-    char delimitadores[] = "|><";
-    char *token;
-    char **comandos = (char **)malloc(255 * sizeof(char *));
-    int i = 0;
-    token = strtok(linea, delimitadores);
-    while (token != NULL)
-    {
-        comandos[i] = token;
-        i++;
-        token = strtok(NULL, delimitadores);
-    }
-    return comandos;
-}
-char **separarArgumentos(char *comando)
-{
-    char delimitadores[] = " ";
-    char *token;
-    char **argumentos = (char **)malloc(255 * sizeof(char *));
-    int i = 0;
-    token = strtok(comando, delimitadores);
-    while (token != NULL)
-    {
-        argumentos[i] = token;
-        i++;
-        token = strtok(NULL, delimitadores);
-    }
-    return argumentos;
-}
-int contarElementos(char **argumentos)
-{
-    int i = 0;
-    while (argumentos[i] != NULL)
-        i++;
-
-    return i;
-}
-
-void ponerFinCadena(char *linea)
-{
-    // printf("dd=%s\n", linea);
-    linea[strcspn(linea, " ")] = '\0';
-}
-
-char *quitarSalto(char *linea)
-{
-    linea[strcspn(linea, "\n")] = '\0';
-    return linea;
-}
-char *getSeparadores(char *linea)
-{
-    char *separadores = (char *)malloc(255 * sizeof(char));
-    int j = 0;
-    for (int i = 0; i < strlen(linea); i++)
-    {
-        if (linea[i] == '|' || linea[i] == '<' || linea[i] == '>')
-        {
-            separadores[j] = linea[i];
-            j++;
-        }
-    }
-
-    separadores[j] = '\0';
-    return separadores;
-}
 
 int main()
 {
@@ -83,16 +17,11 @@ int main()
     {
         int p = 0;
         printf("\n$>");
-        // fflush(stdin);
         fgets(linea, 255, stdin);
         quitarSalto(linea);
         separadores = getSeparadores(linea);
-        // printf("separadores=%s\n",separadores);
-        // printf("linea=%s\n",linea);
-
         comandos = separarComandos(linea);       // Obtenemos los comandos separados por |><
         numComandos = contarElementos(comandos); // Contamos cuantos comandos hay
-
         if (numComandos == 1)
         {
             if (strcmp(comandos[0], "exit") == 0)
@@ -106,19 +35,15 @@ int main()
             {
                 argumentos = separarArgumentos(comandos[0]); // Obtenemos los argumentos de cada comando
                 execvp(argumentos[0], argumentos);
-                // printf("Error al ejecutar el comando\n");
             }
 
             wait(NULL);
         }
 
-        // Arregla lo quitar el espacio al nombre del archivo  jala si tail shell.c >hola.txt
-
         for (int i = 0; i < numComandos - 1; i++)
         {
             argumentos = separarArgumentos(comandos[i]);     // Obtenemos los argumentos de cada comando
             int numArgumentos = contarElementos(argumentos); // Contamos cuantos argumentos hay
-
             if (strcmp(comandos[i], "exit") == 0)
             {
                 exit(0);
@@ -180,7 +105,8 @@ int main()
                 hijo2 = fork();
                 if (hijo2 == 0)
                 {
-                    char *texto;
+                    char *texto=STDOUT_FILENO;
+
                     // comandos[i] trae el nombre del comando
                     dup2(tubo[STDIN_FILENO], STDIN_FILENO);
                     close(tubo[STDIN_FILENO]);
@@ -210,15 +136,16 @@ int main()
                 {
                     dup2(tubo[STDIN_FILENO], STDIN_FILENO);
                     close(tubo[STDIN_FILENO]);
-                    argumentos = separarArgumentos(comandos[1]);
+                    argumentos = separarArgumentos(comandos[i+1]);
                     execvp(argumentos[0], argumentos);
                 }
                 wait(NULL);
                 wait(NULL);
+
             }
         }
     }
-
-
 return 0;
 }
+
+
