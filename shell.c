@@ -20,10 +20,7 @@ char **separarComandos(char *linea)
         token = strtok(NULL, delimitadores);
     }
     comandos[i] = NULL;
-    for(int j=0; j<i; j++)
-    {
-        printf("comandos[%d]=%s\n",j,comandos[j]);
-    }
+
     return comandos;
 }
 
@@ -141,9 +138,7 @@ int main()
         {
             
             argumentos = separarArgumentos(comandos[i]);     // Obtenemos los argumentos de cada comando
-            for(int pp=0; argumentos[pp]!=NULL; pp++)
-                printf("argumentos[%d]=%s\n",pp,argumentos[pp]);
-            printf("separadores[%d]=%c\n",i,separadores[i]);// Obtenemos los separadores (|><
+
             int numArgumentos = contarElementos(argumentos); // Contamos cuantos argumentos hay
 
             if (strcmp(comandos[i], "exit") == 0)
@@ -248,7 +243,7 @@ int main()
                     dup2(tuberias[0][STDIN_FILENO], STDIN_FILENO);
                     close(tuberias[0][STDIN_FILENO]);
                     execvp(argumentos[0], argumentos);
-                    printf("Error al ejecutar el comando en <\n");
+                    //printf("Error al ejecutar el comando <\n");
                 }
                 close(tuberias[0][STDIN_FILENO]);
                 //dup2(tuberias[0][STDIN_FILENO], STDIN_FILENO);
@@ -279,7 +274,7 @@ int main()
                     close(tuberias[j][1]);
                 }   
                     execvp(argumentos[0],argumentos);
-                    printf("Error al ejecutar el comando en |\n");
+                    printf("Error al ejecutar el comando  |\n");
             }
                 if(i>0)
                     close(tuberias[i-1][0]);

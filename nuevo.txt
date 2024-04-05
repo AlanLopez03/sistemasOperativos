@@ -1,0 +1,11 @@
+total 144K
+-rwxrwxr-x 1 alan alan  16K abr  5 03:27 array
+-rw-rw-r-- 1 alan alan 2.0K abr  5 03:27 array.c
+-rw-rw-r-- 1 alan alan 9.0K abr  5 13:30 array.txt
+-rw-rw-r-- 1 alan alan 1.9K abr  4 23:28 ejemplo.c
+-rw-rw-r-- 1 alan alan    0 abr  5 16:42 nuevo.txt
+-rw-rw-r-- 1 alan alan  47K abr  5 13:30 nuev.txt
+-rwxrwxr-x 1 alan alan  17K abr  5 16:41 serie
+-rw-rw-r-- 1 alan alan 2.7K abr  5 16:41 serie.c
+-rwxrwxr-x 1 alan alan  21K abr  5 16:42 shell
+-rw-rw-r-- 1 alan alan 9.1K abr  5 16:41 shell.c
