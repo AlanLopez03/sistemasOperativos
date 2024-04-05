@@ -40,13 +40,13 @@ int contarElementos(char **argumentos)
     int i = 0;
     while (argumentos[i] != NULL)
         i++;
-    
+
     return i;
 }
 
 void ponerFinCadena(char *linea)
 {
-    //printf("dd=%s\n", linea);
+    // printf("dd=%s\n", linea);
     linea[strcspn(linea, " ")] = '\0';
 }
 
@@ -55,20 +55,20 @@ char *quitarSalto(char *linea)
     linea[strcspn(linea, "\n")] = '\0';
     return linea;
 }
-char* getSeparadores(char *linea)
-{   
-    char *separadores=(char *)malloc(255*sizeof(char));
-    int j=0;
+char *getSeparadores(char *linea)
+{
+    char *separadores = (char *)malloc(255 * sizeof(char));
+    int j = 0;
     for (int i = 0; i < strlen(linea); i++)
     {
         if (linea[i] == '|' || linea[i] == '<' || linea[i] == '>')
         {
-            separadores[j]=linea[i];
+            separadores[j] = linea[i];
             j++;
         }
     }
 
-    separadores[j]='\0';
+    separadores[j] = '\0';
     return separadores;
 }
 
@@ -82,18 +82,39 @@ int main()
     while (1)
     {
         int p = 0;
-        printf("$>");
-        fflush(stdin);
+        printf("\n$>");
+        // fflush(stdin);
         fgets(linea, 255, stdin);
         quitarSalto(linea);
-        separadores=getSeparadores(linea);
-        //printf("separadores=%s\n",separadores);
-        //printf("linea=%s\n",linea);
+        separadores = getSeparadores(linea);
+        // printf("separadores=%s\n",separadores);
+        // printf("linea=%s\n",linea);
 
         comandos = separarComandos(linea);       // Obtenemos los comandos separados por |><
         numComandos = contarElementos(comandos); // Contamos cuantos comandos hay
 
-        for (int i = 0; i < numComandos-1; i++)
+        if (numComandos == 1)
+        {
+            if (strcmp(comandos[0], "exit") == 0)
+            {
+                printf("Saliendo del programa\n");
+                exit(0);
+            }
+
+            int hijo = fork();
+            if (hijo == 0)
+            {
+                argumentos = separarArgumentos(comandos[0]); // Obtenemos los argumentos de cada comando
+                execvp(argumentos[0], argumentos);
+                // printf("Error al ejecutar el comando\n");
+            }
+
+            wait(NULL);
+        }
+
+        // Arregla lo quitar el espacio al nombre del archivo  jala si tail shell.c >hola.txt
+
+        for (int i = 0; i < numComandos - 1; i++)
         {
             argumentos = separarArgumentos(comandos[i]);     // Obtenemos los argumentos de cada comando
             int numArgumentos = contarElementos(argumentos); // Contamos cuantos argumentos hay
@@ -102,9 +123,8 @@ int main()
             {
                 exit(0);
             }
-            else if(separadores[p]=='>')
+            else if (separadores[p] == '>')
             {
-
                 int tubo[2];
                 int hijo1, hijo2;
                 pipe(tubo);
@@ -118,66 +138,87 @@ int main()
                     execvp(argumentos[0], argumentos);
                 }
                 close(tubo[STDOUT_FILENO]);
-                 hijo2 = fork();
+                hijo2 = fork();
                 if (hijo2 == 0)
                 {
-                    char *name=comandos[1];
+                    char *name = comandos[i + 1];
                     ponerFinCadena(name);
+
                     int fd = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
                     dup2(tubo[STDIN_FILENO], STDIN_FILENO);
                     close(tubo[STDIN_FILENO]);
                     dup2(fd, STDOUT_FILENO);
                     close(fd);
                     execlp("cat", "cat", NULL);
-
                 }
                 wait(NULL);
                 wait(NULL);
                 p++;
             }
 
-            else if (separadores[p]=="<")//falta que jale
+            else if (separadores[p] == "<") // falta que jale
             {
                 int tubo[2];
                 int hijo1, hijo2;
                 pipe(tubo);
                 hijo1 = fork();
-                if (hijo1==0)   
+                if (hijo1 == 0)
                 {
-                    char *name=comandos[1];
+                    char *name = comandos[1];
                     ponerFinCadena(name);
                     int fd = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-                    
-                    dup2(STDIN_FILENO,fd );
+
+                    dup2(STDIN_FILENO, fd);
                     close(fd);
 
                     dup2(tubo[STDOUT_FILENO], STDOUT_FILENO);
                     close(tubo[STDOUT_FILENO]);
-                    execlp("cat", "cat", NULL);//leer el archivo
+                    execlp("cat", "cat", NULL); // leer el archivo
                 }
-                
+
+                close(tubo[STDIN_FILENO]);
+                hijo2 = fork();
+                if (hijo2 == 0)
+                {
+                    char *texto;
+                    // comandos[i] trae el nombre del comando
+                    dup2(tubo[STDIN_FILENO], STDIN_FILENO);
                     close(tubo[STDIN_FILENO]);
-                    hijo2 = fork();
-                    if (hijo2==0)
-                    {
-                        char *texto;
-                        //comandos[i] trae el nombre del comando
-                        dup2(tubo[STDIN_FILENO], STDIN_FILENO);
-                        close(tubo[STDIN_FILENO]);
-                        execvp(argumentos[0], argumentos);
-                        printf("Error al ejecutar el comando\n");
-                        
-
-
-                    }
-                    wait(NULL);
-                    wait(NULL);
-                    p++;
-                
-                
-
+                    execvp(argumentos[0], argumentos);
+                    printf("Error al ejecutar el comando\n");
+                }
+                wait(NULL);
+                wait(NULL);
+                p++;
+            }
+            else if(separadores[p] == '|')
+            {
+                int tubo[2];
+                int hijo1, hijo2;
+                pipe(tubo);
+                hijo1 = fork();
+                if (hijo1 == 0)
+                {
+                    close(tubo[STDIN_FILENO]);
+                    dup2(tubo[STDOUT_FILENO], STDOUT_FILENO);
+                    close(tubo[STDOUT_FILENO]);
+                    execvp(argumentos[0], argumentos);
+                }
+                close(tubo[STDOUT_FILENO]);
+                hijo2 = fork();
+                if (hijo2 == 0)
+                {
+                    dup2(tubo[STDIN_FILENO], STDIN_FILENO);
+                    close(tubo[STDIN_FILENO]);
+                    argumentos = separarArgumentos(comandos[1]);
+                    execvp(argumentos[0], argumentos);
+                }
+                wait(NULL);
+                wait(NULL);
             }
         }
     }
-    return 0;
+
+
+return 0;
 }
