@@ -20,6 +20,7 @@ char **separarComandos(char *linea)
     }
     return comandos;
 }
+
 char **separarArgumentos(char *comando)
 {
     char delimitadores[] = " ";
@@ -35,6 +36,7 @@ char **separarArgumentos(char *comando)
     }
     return argumentos;
 }
+
 int contarElementos(char **argumentos)
 {
     int i = 0;
@@ -44,10 +46,19 @@ int contarElementos(char **argumentos)
     return i;
 }
 
-void ponerFinCadena(char *linea)
+void QuitarEspacios(char *cadena)
 {
-    // printf("dd=%s\n", linea);
-    linea[strcspn(linea, " ")] = '\0';
+    char *token;
+    char limpio[256] = ""; // Aquí almacenaremos la cadena sin espacios
+
+    token = strtok(cadena, " "); // Divide la cadena en tokens usando los espacios como delimitador
+
+    while (token != NULL) {
+        strcat(limpio, token); // Concatena el token actual a la cadena limpia
+        token = strtok(NULL, " "); // Siguiente token
+    }
+
+    strcpy(cadena, limpio); // Copia la cadena limpia de vuelta a la cadena original
 }
 
 char *quitarSalto(char *linea)
@@ -55,6 +66,7 @@ char *quitarSalto(char *linea)
     linea[strcspn(linea, "\n")] = '\0';
     return linea;
 }
+
 char *getSeparadores(char *linea)
 {
     char *separadores = (char *)malloc(255 * sizeof(char));
@@ -79,9 +91,10 @@ int main()
     char **comandos;
     char **argumentos;
     char *separadores;
+    int p;
     while (1)
     {
-        int p = 0;
+        p = 0;
         printf("\n$>");
         // fflush(stdin);
         fgets(linea, 255, stdin);
@@ -105,6 +118,8 @@ int main()
             if (hijo == 0)
             {
                 argumentos = separarArgumentos(comandos[0]); // Obtenemos los argumentos de cada comando
+                //for(int pp=0; numComandos; pp++)
+                //    printf("argumentos[%d]=%s\n",pp,argumentos[pp]);
                 execvp(argumentos[0], argumentos);
                 // printf("Error al ejecutar el comando\n");
             }
@@ -116,13 +131,14 @@ int main()
 
         for (int i = 0; i < numComandos - 1; i++)
         {
+            //printf("comandos[%d]=%s", i, comandos[i]);
             argumentos = separarArgumentos(comandos[i]);     // Obtenemos los argumentos de cada comando
             int numArgumentos = contarElementos(argumentos); // Contamos cuantos argumentos hay
+            //printf("numArgumentos=%d\n", numArgumentos);
 
             if (strcmp(comandos[i], "exit") == 0)
-            {
                 exit(0);
-            }
+            
             else if (separadores[p] == '>')
             {
                 int tubo[2];
@@ -142,21 +158,22 @@ int main()
                 if (hijo2 == 0)
                 {
                     char *name = comandos[i + 1];
-                    ponerFinCadena(name);
+                    QuitarEspacios(name);
 
                     int fd = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
-                    dup2(tubo[STDIN_FILENO], STDIN_FILENO);
+                    dup2(tubo[STDIN_FILENO], STDIN_FILENO);//leer el contenido de la tuberia (salida del comando anterior)
                     close(tubo[STDIN_FILENO]);
-                    dup2(fd, STDOUT_FILENO);
+                    dup2(fd, STDOUT_FILENO);//escribe en el archivo
                     close(fd);
                     execlp("cat", "cat", NULL);
                 }
+                close(tubo[STDIN_FILENO]);
                 wait(NULL);
                 wait(NULL);
                 p++;
             }
 
-            else if (separadores[p] == "<") // falta que jale
+            else if (separadores[p] == '<') // falta que jale
             {
                 int tubo[2];
                 int hijo1, hijo2;
@@ -164,29 +181,30 @@ int main()
                 hijo1 = fork();
                 if (hijo1 == 0)
                 {
-                    char *name = comandos[1];
-                    ponerFinCadena(name);
-                    int fd = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+                    char *name = comandos[i + 1];
 
-                    dup2(STDIN_FILENO, fd);
+                    QuitarEspacios(name);
+                    int fd = open(name, O_RDONLY);//abrir el archivo
+
+                    close(tubo[STDIN_FILENO]);
+                    dup2(fd, STDIN_FILENO);
                     close(fd);
 
                     dup2(tubo[STDOUT_FILENO], STDOUT_FILENO);
                     close(tubo[STDOUT_FILENO]);
-                    execlp("cat", "cat", NULL); // leer el archivo
+                    execlp("cat", "cat", name, NULL); // leer el archivo
                 }
 
-                close(tubo[STDIN_FILENO]);
+                close(tubo[STDOUT_FILENO]);
                 hijo2 = fork();
                 if (hijo2 == 0)
                 {
-                    char *texto;
-                    // comandos[i] trae el nombre del comando
                     dup2(tubo[STDIN_FILENO], STDIN_FILENO);
                     close(tubo[STDIN_FILENO]);
                     execvp(argumentos[0], argumentos);
                     printf("Error al ejecutar el comando\n");
                 }
+                close(tubo[STDIN_FILENO]);
                 wait(NULL);
                 wait(NULL);
                 p++;
