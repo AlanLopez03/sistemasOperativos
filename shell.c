@@ -39,9 +39,8 @@ int contarElementos(char **argumentos)
 {
     int i = 0;
     while (argumentos[i] != NULL)
-    {
         i++;
-    }
+    
     return i;
 }
 
@@ -58,7 +57,6 @@ char *quitarSalto(char *linea)
 }
 int main()
 {
-
     int numComandos;
     char linea[255];
     char **comandos;
@@ -113,6 +111,5 @@ int main()
             }
         }
     }
-
     return 0;
 }
