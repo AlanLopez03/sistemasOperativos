@@ -1,6 +1,0 @@
-total 32K
--rw-rw-r-- 1 alan alan 1.9K abr  4 20:46 ejemplo.c
--rw------- 1 alan alan   34 abr  4 21:21 nuevo.txt
--rw------- 1 alan alan    0 abr  4 21:26 p.txt
--rwxrwxr-x 1 alan alan  17K abr  4 21:26 shell
--rw-rw-r-- 1 alan alan 3.0K abr  4 21:25 shell.c

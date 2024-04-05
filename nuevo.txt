@@ -1,4 +1,0 @@
-ejemplo.c
-nuevo.txt
-shell
-shell.c
