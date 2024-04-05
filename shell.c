@@ -148,32 +148,32 @@ int main()
                     ponerFinCadena(name);
                     int fd = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
                     
-                    dup2(tubo[STDIN_FILENO], fd);
+                    dup2(STDIN_FILENO,fd );
+                    close(fd);
 
-
+                    dup2(tubo[STDOUT_FILENO], STDOUT_FILENO);
                     close(tubo[STDOUT_FILENO]);
-                    dup2(tubo[STDIN_FILENO], STDIN_FILENO);
-                    close(tubo[STDIN_FILENO]);
-                    execvp(argumentos[0], argumentos);
+                    execlp("cat", "cat", NULL);//leer el archivo
                 }
-                {
+                
                     close(tubo[STDIN_FILENO]);
                     hijo2 = fork();
                     if (hijo2==0)
                     {
-                        char *name=comandos[1];
-                        ponerFinCadena(name);
-                        int fd = open(name, O_RDONLY);
-                        dup2(tubo[STDOUT_FILENO], STDOUT_FILENO);
-                        close(tubo[STDOUT_FILENO]);
-                        dup2(fd, STDIN_FILENO);
-                        close(fd);
-                        execlp("cat", "cat", NULL);
+                        char *texto;
+                        //comandos[i] trae el nombre del comando
+                        dup2(tubo[STDIN_FILENO], STDIN_FILENO);
+                        close(tubo[STDIN_FILENO]);
+                        execvp(argumentos[0], argumentos);
+                        printf("Error al ejecutar el comando\n");
+                        
+
+
                     }
                     wait(NULL);
                     wait(NULL);
                     p++;
-                }
+                
                 
 
             }
