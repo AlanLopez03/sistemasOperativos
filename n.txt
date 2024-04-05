@@ -1,0 +1,10 @@
+fork
+fork2
+fork2.c
+fork.c
+n.txt
+shell
+shell.c
+tuberias
+tuberias.c
+wc
