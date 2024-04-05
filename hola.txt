@@ -1,5 +1,0 @@
-total 32K
--rw-rw-r-- 1 alvarado alvarado 1.9K abr  5 00:02 ejemplo.c
--rw------- 1 alvarado alvarado    0 abr  5 04:10 hola.txt
--rwxrwxr-x 1 alvarado alvarado  17K abr  5 04:04 shell
--rw-rw-r-- 1 alvarado alvarado 7.0K abr  5 04:07 shell.c

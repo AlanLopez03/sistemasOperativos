@@ -131,19 +131,17 @@ int main()
             {
                 argumentos = separarArgumentos(comandos[0]); // Obtenemos los argumentos de cada comando
                 QuitarEspacios(argumentos[0]);
+                //for(int pp=0; numComandos; pp++)
+                //    printf("argumentos[%d]=%s\n",pp,argumentos[pp]);
                 execvp(argumentos[0], argumentos);
             }
 
             wait(NULL);
         }
-
-        for (int i = 0; i < numComandos &&separadores[p]!='\0'; i++)
+        printf("numComandos=%d\n", numComandos);
+        for (int i = 0; i < numComandos ; i++)
         {
-            
             argumentos = separarArgumentos(comandos[i]);     // Obtenemos los argumentos de cada comando
-            for(int pp=0; argumentos[pp]!=NULL; pp++)
-                printf("argumentos[%d]=%s\n",pp,argumentos[pp]);
-            printf("separadores[%d]=%c\n",i,separadores[i]);// Obtenemos los separadores (|><
             int numArgumentos = contarElementos(argumentos); // Contamos cuantos argumentos hay
 
             if (strcmp(comandos[i], "exit") == 0)
@@ -176,6 +174,7 @@ int main()
                  close(tuberias[0][STDIN_FILENO]);
                  wait(NULL);
                  wait(NULL);
+                 p++;
                  flagSalida = 1;
              }
             else if (separadores[p] == '>')//caso donde > puede estar en cualquier parte
@@ -286,8 +285,9 @@ int main()
                 if(i<numComandos-1)
                     close(tuberias[i][1]);
                 wait(NULL);
-
+                p--;
             }
+            p++;
         }
     }
 return 0;
