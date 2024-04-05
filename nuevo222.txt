@@ -1,0 +1,12 @@
+array
+array.c
+ejemplo.c
+ff.txt
+hola1.txt
+hola.txt
+nuevo222.txt
+nuevo.txt
+serie
+serie.c
+shell
+shell.c
