@@ -159,6 +159,7 @@ int main()
              }
             else
             {
+<<<<<<< HEAD
                 int tuberia[2];
                 pipe(tuberia);
                 //printf("Delimitadores=%c\n", delimitadores[0]);
@@ -187,13 +188,51 @@ int main()
                         close(fd);
                         write(STDOUT_FILENO, tuberia[0], strlen(tuberia[0]));
                         // Puede haber violacion de segmento por el comando siguiente
+=======
+                int tubo[2];
+                int hijo1, hijo2;
+                pipe(tubo);
+                hijo1 = fork();
+                if (hijo1==0)   
+                {
+                    char *name=comandos[1];
+                    ponerFinCadena(name);
+                    int fd = open(name, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+                    
+                    dup2(STDIN_FILENO,fd );
+                    close(fd);
+
+                    dup2(tubo[STDOUT_FILENO], STDOUT_FILENO);
+                    close(tubo[STDOUT_FILENO]);
+                    execlp("cat", "cat", NULL);//leer el archivo
+                }
+                
+                    close(tubo[STDIN_FILENO]);
+                    hijo2 = fork();
+                    if (hijo2==0)
+                    {
+                        char *texto;
+                        //comandos[i] trae el nombre del comando
+                        dup2(tubo[STDIN_FILENO], STDIN_FILENO);
+                        close(tubo[STDIN_FILENO]);
+                        execvp(argumentos[0], argumentos);
+                        printf("Error al ejecutar el comando\n");
+                        
+
+
+>>>>>>> f2026c99157a6a4a754f4e5b0001b66259d80aed
                     }
                     close(tuberia[0]);
                     wait(NULL);
                     wait(NULL);
                     p++;
+<<<<<<< HEAD
                 }
 >>>>>>> origin
+=======
+                
+                
+>>>>>>> f2026c99157a6a4a754f4e5b0001b66259d80aed
 
                 //int hijo = fork();
                 //if (hijo == 0){
