@@ -76,9 +76,10 @@ char *getSeparadores(char *linea)
 
 int main(){
 
-    int tuberias[3][2];
-    char *comandos[] = {"ls", "wc","cat"};
-    int n = 3;
+    int tuberias[1][2];
+    char *comandos[] = {"ls","wc"};
+    int n = 2;
+    char **argumentos;
 
     for (int i = 0; i < n - 1; i++)
     {
@@ -103,6 +104,8 @@ int main(){
                 close(tuberias[j][0]);
                 close(tuberias[j][1]);
             }
+            //argumentos=separarArgumentos(comandos[i]);
+            //printf("argumentos=%s\n",argumentos[0]);
             execlp(comandos[i], comandos[i], NULL);
             perror("Error al ejecutar el comando");
             exit(EXIT_FAILURE);
