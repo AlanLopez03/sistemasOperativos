@@ -168,7 +168,7 @@ void crearFlujoEntrada(int tuberias[][2], char *archivo, char **argumentos, int 
 void finTuberia(int tuberia[][2], int i,char *nombre)
 {
     int pid;
-    
+    printf("nombre: %s\n",nombre);
     int fd=open(nombre,O_WRONLY|O_CREAT|O_TRUNC,0600);
     pid=fork();
     if(pid==0)
@@ -261,7 +261,7 @@ int main()
             p = 0;
 
             int indiceComando = 0;
-            while (p < numSeparadores && indiceComando < numComandos)
+            while (p < numSeparadores && indiceComando < numComandos-1)
             {
 
                 argumentos = separarArgumentos(comandos[indiceComando]); // Obtenemos los argumentos de cada comando
@@ -275,8 +275,8 @@ int main()
                     else if (separadores[p] == '>')
                     {
                         // caso donde > puede estar en cualquier parte
-                        printf("indiceComando: %d\n", indiceComando);
-                        finTuberia(tuberias, p, comandos[indiceComando ]);
+                        
+                        finTuberia(tuberias, p, comandos[indiceComando+1]);
                         //crearFlujoSalida(tuberias, argumentos, comandos[indiceComando + 1], indiceComando);
                     }
                     else if (separadores[p] == '<' && indiceComando == 0)
@@ -285,6 +285,7 @@ int main()
                         crearFlujoEntrada(tuberias, comandos[indiceComando + 1], argumentos, indiceComando);
                     else if (separadores[p] == '|')
                     {
+                        printf("indiceComando: %d\n", indiceComando);
                         crearTuberia(tuberias, argumentos, indiceComando, numComandos);
                     }
                     indiceComando++;
