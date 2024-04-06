@@ -224,7 +224,7 @@ int main()
             wait(NULL);
         }
 
-        for (int i = 0; separadores[p] != '\0' && i<numComandos; i++)
+        for (int i = 0; separadores[p] != '\0'; i++)
         {
             argumentos = separarArgumentos(comandos[i]); // Obtenemos los argumentos de cada comando
             int numArgumentos = contarElementos(argumentos); // Contamos cuantos argumentos hay
@@ -233,7 +233,7 @@ int main()
             else {
                 if (separadores[p] == '>' && i == 0)
                 crearFlujoSalida(tuberias, argumentos, comandos[i + 1], 0);
-
+                
             else if (separadores[p] == '>') // caso donde > puede estar en cualquier parte
                 crearFlujoSalida(tuberias, argumentos, comandos[i + 1], i);
             else if (separadores[p] == '<' && i == 0)
