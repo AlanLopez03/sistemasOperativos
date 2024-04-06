@@ -56,7 +56,7 @@ int contar(char *linea)
     int i = 0;
     while (linea[i] != '\0')
         i++;
-
+   
     return i;
 }
 void QuitarEspacios(char *cadena)
@@ -95,7 +95,7 @@ char *getSeparadores(char *linea)
     }
 
     separadores[j] = '\0';
-
+   
     return separadores;
 }
 
@@ -105,10 +105,6 @@ void crearFlujoSalida(int tuberia[][2], char **args, char *nombreArchivo, int in
     hijo1 = fork();
     if (hijo1 == 0)
     {
-        if (indice > 0)
-            dup2(tuberia[indice-1][0], STDIN_FILENO);//redirigir la entrada del comando anterior
-
-        close(tuberia[indice][STDIN_FILENO]);
         close(tuberia[indice][STDIN_FILENO]);
         dup2(tuberia[indice][STDOUT_FILENO], STDOUT_FILENO);
         close(tuberia[indice][STDOUT_FILENO]);
@@ -165,32 +161,13 @@ void crearFlujoEntrada(int tuberias[][2], char *archivo, char **argumentos, int 
     wait(NULL);
     wait(NULL);
 }
-void finTuberia(int tuberia[][2], int i,char *nombre)
-{
-    int pid;
-    
-    int fd=open(nombre,O_WRONLY|O_CREAT|O_TRUNC,0600);
-    pid=fork();
-    if(pid==0)
-    {
-        dup2(tuberia[i][0],STDIN_FILENO);
-        close(tuberia[i][0]);
-        dup2(fd,STDOUT_FILENO);
-        close(fd);
-        execlp("cat","cat",NULL);
-    }
-    //close(tuberia[i][0]);
-    wait(NULL);
 
-}
-
-
-void crearTuberia(int tuberia[][2], char **args, int i, int numComandos)
+void crearTuberia(int tuberia[][2],char **args,int i,int numComandos)
 {
     int hijo = fork();
     if (hijo == 0)
     {
-        if (i > 0)                                            // si no es el primer comando
+        if (i > 0)                                             // si no es el primer comando
             dup2(tuberia[i - 1][STDIN_FILENO], STDIN_FILENO); // leer el contenido de la tuberia (salida del comando anterior)
 
         if (i < numComandos - 1) // si no es el ultimo comando
@@ -230,7 +207,7 @@ int main()
         numComandos = contarElementos(comandos); // Contamos cuantos comandos hay
         numSeparadores = contar(separadores);
 
-        int tuberias[numComandos - 1][2]; // Matriz para almacenar las tuberías
+        int tuberias[numComandos - 1][2];        // Matriz para almacenar las tuberías
         for (int i = 0; i < numComandos - 1; i++)
         {
             pipe(tuberias[i]);
@@ -243,9 +220,8 @@ int main()
                 printf("Saliendo del programa\n");
                 exit(0);
             }
-            else
-            {
-                int hijo = fork();
+
+            int hijo = fork();
             if (hijo == 0)
             {
                 argumentos = separarArgumentos(comandos[0]); // Obtenemos los argumentos de cada comando
@@ -254,44 +230,39 @@ int main()
             }
 
             wait(NULL);
-            }
         }
-        else
+        p = 0;
+
+        int indiceComando = 0;
+        while (p < numSeparadores && indiceComando < numComandos)
         {
-            p = 0;
-
-            int indiceComando = 0;
-            while (p < numSeparadores && indiceComando < numComandos)
+            
+            argumentos = separarArgumentos(comandos[indiceComando]); // Obtenemos los argumentos de cada comando
+            int numArgumentos = contarElementos(argumentos); // Contamos cuantos argumentos hay
+            if (strcmp(comandos[indiceComando], "exit") == 0)
+                exit(0);
+            else//va a ejecutar al menos 2 comandos
             {
+            if (separadores[p] == '>' && indiceComando == 0)
+                crearFlujoSalida(tuberias, argumentos, comandos[indiceComando + 1], 0);
+            else if (separadores[p] == '>'){ 
+                // caso donde > puede estar en cualquier parte
+                dup2(tuberias[indiceComando][0], tuberias[indiceComando-1][0]);
+                clo
+                crearFlujoSalida(tuberias, argumentos, comandos[indiceComando + 1], indiceComando);
+            }
+            else if (separadores[p] == '<' && indiceComando == 0)
+                crearFlujoEntrada(tuberias, comandos[indiceComando + 1], argumentos, 0);
+            else if (separadores[p] == '<')    
+                crearFlujoEntrada(tuberias, comandos[indiceComando + 1], argumentos, indiceComando);
+            else if (separadores[p] == '|')
+            {
+                crearTuberia(tuberias,argumentos,indiceComando,numComandos);
 
-                argumentos = separarArgumentos(comandos[indiceComando]); // Obtenemos los argumentos de cada comando
-                int numArgumentos = contarElementos(argumentos);         // Contamos cuantos argumentos hay
-                if (strcmp(comandos[indiceComando], "exit") == 0)
-                    exit(0);
-                else // va a ejecutar al menos 2 comandos
-                {
-                    if (separadores[p] == '>' && indiceComando == 0)
-                        crearFlujoSalida(tuberias, argumentos, comandos[indiceComando + 1], 0);
-                    else if (separadores[p] == '>')
-                    {
-                        // caso donde > puede estar en cualquier parte
-                        printf("indiceComando: %d\n", indiceComando);
-                        finTuberia(tuberias, p, comandos[indiceComando ]);
-                        //crearFlujoSalida(tuberias, argumentos, comandos[indiceComando + 1], indiceComando);
-                    }
-                    else if (separadores[p] == '<' && indiceComando == 0)
-                        crearFlujoEntrada(tuberias, comandos[indiceComando + 1], argumentos, 0);
-                    else if (separadores[p] == '<')
-                        crearFlujoEntrada(tuberias, comandos[indiceComando + 1], argumentos, indiceComando);
-                    else if (separadores[p] == '|')
-                    {
-                        crearTuberia(tuberias, argumentos, indiceComando, numComandos);
-                    }
-                    indiceComando++;
-                    if (indiceComando % 2 == 0)
-                    {
-                        p++;
-                    }
+            }
+                indiceComando++;
+                if(indiceComando%2==0){
+                    p++;
                 }
             }
         }
