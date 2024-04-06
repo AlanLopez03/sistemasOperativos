@@ -51,6 +51,14 @@ int contarElementos(char **argumentos)
     return i;
 }
 
+int contar(char *linea)
+{
+    int i = 0;
+    while (linea[i] != '\0')
+        i++;
+
+    return i;
+}
 void QuitarEspacios(char *cadena)
 {
     char *token;
@@ -87,6 +95,7 @@ char *getSeparadores(char *linea)
     }
 
     separadores[j] = '\0';
+
     return separadores;
 }
 
@@ -152,23 +161,21 @@ void crearFlujoEntrada(int tuberias[][2], char *archivo, char **argumentos, int 
     wait(NULL);
     wait(NULL);
 }
-void crearTuberia(int tuberia[][2],char *comando,char **args,int i,int numComandos)
+
+void crearTuberia(int tuberia[][2], char **args, int i, int numComandos)
 {
     int hijo = fork();
     if (hijo == 0)
     {
-        if (i > 0)                                             // si no es el primer comando
+        if (i > 0)                                            // si no es el primer comando
             dup2(tuberia[i - 1][STDIN_FILENO], STDIN_FILENO); // leer el contenido de la tuberia (salida del comando anterior)
 
         if (i < numComandos - 1) // si no es el ultimo comando
         {
             dup2(tuberia[i][STDOUT_FILENO], STDOUT_FILENO); // escribir en la tuberia
         }
-        for (int j = 0; j < numComandos - 1; j++)
-        {
-            close(tuberia[j][0]);
-            close(tuberia[j][1]);
-        }
+        close(tuberia[i][0]);
+        close(tuberia[i][1]);
         execvp(args[0], args);
         printf("Error al ejecutar el comando  |\n");
     }
@@ -182,6 +189,7 @@ void crearTuberia(int tuberia[][2],char *comando,char **args,int i,int numComand
 int main()
 {
     int numComandos;
+    int numSeparadores;
     char linea[255];
     char **comandos;
     char **argumentos;
@@ -189,17 +197,17 @@ int main()
     int p;
     while (1)
     {
-        p = 0;
-        int flagSalida = 0, flagEntrada = 0;
+        numSeparadores = 0;
         printf("\n$>");
         fgets(linea, 255, stdin);
         quitarSalto(linea);
         separadores = getSeparadores(linea);
+
         comandos = separarComandos(linea);       // Obtenemos los comandos separados por |><
         numComandos = contarElementos(comandos); // Contamos cuantos comandos hay
-        int tuberias[numComandos - 1][2];        // Matriz para almacenar las tuberías
+        numSeparadores = contar(separadores);
 
-        // Crear todas las tuberías en el bucle
+        int tuberias[numComandos - 1][2]; // Matriz para almacenar las tuberías
         for (int i = 0; i < numComandos - 1; i++)
         {
             pipe(tuberias[i]);
@@ -212,34 +220,55 @@ int main()
                 printf("Saliendo del programa\n");
                 exit(0);
             }
-
-            int hijo = fork();
-            if (hijo == 0)
+            else
             {
-                argumentos = separarArgumentos(comandos[0]); // Obtenemos los argumentos de cada comando
-                QuitarEspacios(argumentos[0]);
-                execvp(argumentos[0], argumentos);
+                int hijo = fork();
+                if (hijo == 0)
+                {
+                    argumentos = separarArgumentos(comandos[0]); // Obtenemos los argumentos de cada comando
+                    QuitarEspacios(argumentos[0]);
+                    execvp(argumentos[0], argumentos);
+                }
+
+                wait(NULL);
             }
-
-            wait(NULL);
         }
-
-        for (int i = 0; i < numComandos && separadores[p] != '\0'; i++)
+        else
         {
-            argumentos = separarArgumentos(comandos[i]); // Obtenemos los argumentos de cada comando
-            int numArgumentos = contarElementos(argumentos); // Contamos cuantos argumentos hay
-            if (strcmp(comandos[i], "exit") == 0)
-                exit(0);
-            else if (separadores[p] == '>' && i == 0)
-                crearFlujoSalida(tuberias, argumentos, comandos[i + 1], 0);
-            else if (separadores[p] == '>') // caso donde > puede estar en cualquier parte
-                crearFlujoSalida(tuberias, argumentos, comandos[i + 1], i);
-            else if (separadores[p] == '<' && i == 0)
-                crearFlujoEntrada(tuberias, comandos[i + 1], argumentos, 0);
-            else if (separadores[p] == '<') // falta que jale      
-                crearFlujoEntrada(tuberias, comandos[i + 1], argumentos, i);
-            else if (separadores[p] == '|')
-                crearTuberia(tuberias,comandos[i],argumentos,i,numComandos);
+            p = 0;
+
+            int indiceComando = 0;
+            while (p < numSeparadores && indiceComando < numComandos)
+            {
+
+                argumentos = separarArgumentos(comandos[indiceComando]); // Obtenemos los argumentos de cada comando
+                int numArgumentos = contarElementos(argumentos);         // Contamos cuantos argumentos hay
+                if (strcmp(comandos[indiceComando], "exit") == 0)
+                    exit(0);
+                else // va a ejecutar al menos 2 comandos
+                {
+                    if (separadores[p] == '>' && indiceComando == 0)
+                        crearFlujoSalida(tuberias, argumentos, comandos[indiceComando + 1], 0);
+                    else if (separadores[p] == '>')
+                    {
+                        // caso donde > puede estar en cualquier parte
+                        crearFlujoSalida(tuberias, argumentos, comandos[indiceComando + 1], indiceComando);
+                    }
+                    else if (separadores[p] == '<' && indiceComando == 0)
+                        crearFlujoEntrada(tuberias, comandos[indiceComando + 1], argumentos, 0);
+                    else if (separadores[p] == '<')
+                        crearFlujoEntrada(tuberias, comandos[indiceComando + 1], argumentos, indiceComando);
+                    else if (separadores[p] == '|')
+                    {
+                        crearTuberia(tuberias, argumentos, indiceComando, numComandos);
+                    }
+                    indiceComando++;
+                    if (indiceComando % 2 == 0)
+                    {
+                        p++;
+                    }
+                }
+            }
         }
     }
     return 0;
